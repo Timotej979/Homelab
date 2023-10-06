@@ -1,5 +1,99 @@
+# Descritption: Nginx reverse proxy manager service for kubernetes cluster
 apiVersion: v1
 kind: Namespace
 metadata:
   name: nginxrpm-service
 ---
+# Nginx reverse proxy manager deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginxrpm
+  name: nginxrpm
+  namespace: nginxrpm-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginxrpm
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: nginxrpm
+    spec:
+      containers:
+      # Nginx reverse proxy manager container
+      - name: nginxrpm
+        image: jlesage/nginx-proxy-manager:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        - containerPort: 443
+          protocol: TCP
+        - containerPort: 81
+          protocol: TCP
+---
+# Nginx reverse proxy http service
+kind: Service
+apiVersion: v1
+metadata:
+  name: nginxrpm-http
+  namespace: nginxrpm-service
+  annotations:
+    metallb.universe.tf/allow-shared-ip: nginxrpm
+spec:
+  selector:
+    app: nginxrpm
+  ports:
+  - protocol: TCP
+    port: 80
+    name: nginxrpmhttp
+    targetPort: 80
+  type: LoadBalancer
+  loadBalancerIP: 10.10.10.230
+---
+# Nginx reverse proxy https service
+kind: Service
+apiVersion: v1
+metadata:
+  name: nginxrpm-https
+  namespace: nginxrpm-service
+  annotations:
+    metallb.universe.tf/allow-shared-ip: nginxrpm
+spec:
+  selector:
+    app: nginxrpm
+  ports:
+  - protocol: TCP
+    port: 443
+    name: nginxrpmhttps
+    targetPort: 443
+  type: LoadBalancer
+  loadBalancerIP: 10.10.10.230
+---
+# Nginx reverse proxy dashboard service
+kind: Service
+apiVersion: v1
+metadata:
+  name: nginxrpm-dashboard
+  namespace: nginxrpm-service
+  annotations:
+    metallb.universe.tf/allow-shared-ip: nginxrpm
+spec:
+  selector:
+    app: nginxrpm
+  ports:
+  - protocol: TCP
+    port: 81
+    name: nginxrpmdashboard
+    targetPort: 81  
+  type: LoadBalancer
+  loadBalancerIP: 10.10.10.230
+  

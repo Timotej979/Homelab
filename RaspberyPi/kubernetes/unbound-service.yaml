@@ -1,8 +1,10 @@
+# Description: Unbound service for kubernetes cluster
 apiVersion: v1
 kind: Namespace
 metadata:
   name: unbound-service
 ---
+# Unbound deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -26,6 +28,7 @@ spec:
         app: unbound
     spec:
       containers:
+      # Unbound container
       - name: unbound
         image: timwebster9/unbound:1.0.0
         imagePullPolicy: IfNotPresent
@@ -35,6 +38,7 @@ spec:
         - containerPort: 53
           protocol: UDP
 ---
+# Unbound UDP service
 kind: Service
 apiVersion: v1
 metadata:
@@ -53,6 +57,7 @@ spec:
   type: LoadBalancer
   loadBalancerIP: 10.10.10.220
 ---
+# Unbound TCP service
 kind: Service
 apiVersion: v1
 metadata:

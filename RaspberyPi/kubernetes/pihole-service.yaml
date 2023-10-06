@@ -1,8 +1,10 @@
+# Description: Pihole service for kubernetes cluster
 apiVersion: v1
 kind: Namespace
 metadata:
   name: pihole-service
 ---
+# FTL ConfigMap
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,6 +15,7 @@ data:
     MAXDBDAYS=7
     LOGFILE=/var/log/pihole/pihole-FTL.log
 ---
+# Whitelist ConfigMap
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -24,6 +27,7 @@ data:
     nrdp.nccp.netflix.com
     collector-medium.lightstep.com
 ---
+# Adlists ConfigMap
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -49,6 +53,7 @@ data:
     https://v.firebog.net/hosts/Easyprivacy.txt
     https://v.firebog.net/hosts/Prigent-Ads.txt
 ---
+# Pihole Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -72,6 +77,7 @@ spec:
         app: pihole
     spec:
       containers:
+      # Pihole Container
       - env:
         - name: TZ
           value: Europe/Ljubljana
@@ -82,10 +88,12 @@ spec:
         - name: DNS2
           value: 10.10.10.254
         - name: WEBTHEME
-          value: default-dark
+          value: default-dark 
+        # Pihole image
         image: pihole/pihole:latest
         imagePullPolicy: IfNotPresent
         name: pihole
+        # Pihole ports
         ports:
         - name: dns-tcp
           containerPort: 53
@@ -102,6 +110,7 @@ spec:
         - name: https
           containerPort: 443
           protocol: TCP
+        # Pihole resources
         resources:
           requests:
             cpu: "20m"
@@ -109,12 +118,14 @@ spec:
           limits:
             cpu: "250m"
             memory: "896Mi"
+        # Readiness Probes
         readinessProbe:
           exec:
             command: ['dig', '@127.0.0.1', 'cnn.com']
           timeoutSeconds: 20
           initialDelaySeconds: 5
           periodSeconds: 60
+        # Liveness probe
         livenessProbe:
           tcpSocket:
             port: dns-tcp
@@ -138,6 +149,7 @@ spec:
         - name: adlists
           mountPath: /etc/pihole/adlists.list
           subPath: adlists.list
+      # Pihole container settings
       restartPolicy: Always
       volumes:
       - name: etc-pihole
@@ -152,6 +164,7 @@ spec:
       - name: var-log-lighttpd
         emptyDir:
           medium: Memory
+      # ConfigMaps
       - name: ftlconf
         configMap:
           name: pihole-ftl.conf
@@ -171,6 +184,7 @@ spec:
             - key: adlists.list
               path: adlists.list
 ---
+# Pihole UDP Service
 kind: Service
 apiVersion: v1
 metadata:
@@ -189,6 +203,7 @@ spec:
   type: LoadBalancer
   loadBalancerIP: 10.10.10.210
 ---
+# Pihole TCP Service
 kind: Service
 apiVersion: v1
 metadata:
