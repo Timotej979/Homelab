@@ -82,7 +82,7 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: nginxrpm-dashboard
+  name: nginxrpm-web
   namespace: nginxrpm-service
   annotations:
     metallb.universe.tf/allow-shared-ip: nginxrpm
@@ -92,7 +92,7 @@ spec:
   ports:
   - protocol: TCP
     port: 81
-    name: nginxrpmdashboard
+    name: nginxrpmweb
     targetPort: 81  
   type: LoadBalancer
   loadBalancerIP: 10.10.10.230
